@@ -2,28 +2,35 @@ import { makeSectionWrapperWithClass } from "./makeSectionWrapperWithClass.js";
 import { makeDisplayWithClass } from "./makeDisplayWithClass.js";
 import { makeButtonsMarkUpWithClass } from "./makeButtonsMarkUpWithClass.js";
 import { findElementByContext } from "./findElementByContext.js";
+import { chekInputValue } from "./chekInputValue.js";
 import { BASIC_BUTTONS, BASIC_OPERATIONS } from "./Settings.js";
-
 export class Calculator {
   #calc;
-  #display;
-  #previousDisplay;
 
-  #arrayForDspExpression = [];
-  #arrayForPreviousDspExpression = [];
+  #mainDisplay;
+  #subDisplay;
+
+  #mainDsplExpression = [];
+  #subDsplExpression = [];
 
   constructor(IDtoInsertCalc) {
     this.#calc = document.querySelector(IDtoInsertCalc);
 
     this.render();
-    this.#display = document.querySelector(".display");
-    this.#previousDisplay = document.querySelector(".previous");
+    this.#mainDisplay = document.querySelector(".display");
+    this.#subDisplay = document.querySelector(".previous");
 
     this.addListeners();
-    this.addExpArrNewElement("0");
 
-    this.setDisplayExpression(this.#arrayForDspExpression);
-    this.setPreviousDisplayExpression(["0"]);
+    this.resetMainDsplExpression();
+    this.resetSubDsplExpression();
+
+    this.showOnMainDisplay();
+    this.showOnSubDisplay();
+
+    //
+    this.setMainDisplayExpression(["0"]);
+    this.showOnMainDisplay();
   }
 
   render() {
@@ -62,83 +69,101 @@ export class Calculator {
       ) {
         return;
       }
-      this.addArrayForExpressionNewElement(event);
+
+      this.onClick(event);
     });
   }
 
-  setDisplayExpression(newExpression = this.#arrayForDspExpression) {
-    this.#display.textContent = newExpression.join("");
+  //
+  showOnMainDisplay(newExpression = this.#mainDsplExpression) {
+    this.#mainDisplay.textContent = newExpression.join("");
   }
 
-  setPreviousDisplayExpression(
-    newExpression = this.#arrayForPreviousDspExpression
-  ) {
-    this.#previousDisplay.textContent = newExpression.join("");
+  showOnSubDisplay(newExpression = this.#subDsplExpression) {
+    this.#subDisplay.textContent = newExpression.join("");
   }
 
-  addToPreviousDisplayExpressionNewElement(newElem) {
-    this.#arrayForPreviousDspExpression.push(newElem);
-  }
-
-  updatePreviousDisplayExpression(newExpression) {
-    this.#arrayForPreviousDspExpression = [...newExpression];
-  }
-
-  addExpArrNewElement(addingElement, position = "end") {
-    position === "end" ? this.#arrayForDspExpression.push(addingElement) : null;
+  addToMainDsplExpressionNewElement(addingElement, position = "end") {
+    position === "end" ? this.#mainDsplExpression.push(addingElement) : null;
     position == "start"
-      ? this.#arrayForDspExpression.unshift(addingElement)
+      ? this.#mainDsplExpression.unshift(addingElement)
       : null;
   }
 
-  delExpArrElement(position = "end") {
-    position === "end" ? this.#arrayForDspExpression.pop() : null;
-    position === "start" ? this.#arrayForDspExpression.shift() : null;
+  addToSubDsplExpressionNewElement(newElem) {
+    this.#subDsplExpression.push(newElem);
   }
 
-  addExpArrToLastElement(adaingValue, position = "end") {
-    let prevValue =
-      this.#arrayForDspExpression[this.#arrayForDspExpression.length - 1];
-    this.#arrayForDspExpression.pop();
+  addToMainDsplEpressionLastElementSymbol(adaingValue, position = "end") {
+    const prevValue =
+      this.#mainDsplExpression[this.#mainDsplExpression.length - 1];
+    this.#mainDsplExpression.pop();
+
     position === "end"
-      ? this.#arrayForDspExpression.push(`${prevValue + adaingValue}`)
+      ? this.#mainDsplExpression.push(`${prevValue + adaingValue}`)
       : null;
 
     position === "start"
-      ? this.#arrayForDspExpression.push(`${adaingValue + prevValue}`)
+      ? this.#mainDsplExpression.push(`${adaingValue + prevValue}`)
       : null;
   }
 
-  deleteFromExpArrLastElement(position = "end") {
+  resetMainDsplExpression() {
+    this.#mainDsplExpression = ["0"];
+  }
+
+  resetSubDsplExpression() {
+    this.#subDsplExpression = ["0"];
+  }
+
+  getMainDsplExpressionLastElement() {
+    return this.#mainDsplExpression[this.#mainDsplExpression.length - 1];
+  }
+
+  replaceMainDsplExpressionLastElement(newElement) {
+    this.#mainDsplExpression.pop();
+    this.#mainDsplExpression.push(`${newElement}`);
+  }
+
+  deleteFromMainExpressionElement(position = "end") {
+    position === "end" ? this.#mainDsplExpression.pop() : "";
+
+    position === "start" ? this.#mainDsplExpression.shift() : "";
+  }
+
+  deleteFromMainExpressionLastElementSymbol(position = "end") {
     let prevValue =
-      this.#arrayForDspExpression[this.#arrayForDspExpression.length - 1];
-    this.#arrayForDspExpression.pop();
+      this.#mainDsplExpression[this.#mainDsplExpression.length - 1];
+    this.#mainDsplExpression.pop();
     position === "end"
-      ? this.#arrayForDspExpression.push(`${prevValue.slice(0, -1)}`)
-      : null;
+      ? this.#mainDsplExpression.push(`${prevValue.slice(0, -1)}`)
+      : "";
 
     position === "start"
-      ? this.#arrayForDspExpression.push(`${prevValue.slice(1)}`)
-      : null;
+      ? this.#mainDsplExpression.push(`${prevValue.slice(1)}`)
+      : "";
   }
 
-  updateExpArrLastElement(newValue) {
-    this.#arrayForDspExpression[
-      this.#arrayForDspExpression.length - 1
-    ] = `${newValue}`;
+  setSubDisplayExpression(newExpression) {
+    this.#subDsplExpression = [...newExpression];
   }
 
-  updateExpArrLastElementIfEndsWithPoint() {
-    this.#arrayForDspExpression[
-      this.#arrayForDspExpression.length - 1
-    ].endsWith(".")
-      ? (this.#arrayForDspExpression[this.#arrayForDspExpression.length - 1] +=
-          "0")
-      : null;
+  setMainDisplayExpression(newExpression) {
+    this.#mainDsplExpression = [...newExpression];
   }
 
-  checkBracketsQauntity() {
-    return this.#arrayForDspExpression.reduce((acc, elem) => {
+  fixLastMainDsplExpressionElementEndsWithPoin() {
+    if (
+      this.#mainDsplExpression[this.#mainDsplExpression.length - 1].endsWith(
+        "."
+      )
+    ) {
+      this.addToMainDsplEpressionLastElementSymbol("0");
+    }
+  }
+
+  calcAdvantageOpenBrackets() {
+    return this.#mainDsplExpression.reduce((acc, elem) => {
       if (elem === "(") {
         acc += 1;
       }
@@ -149,398 +174,351 @@ export class Calculator {
     }, 0);
   }
 
-  addArrayForExpressionNewElement(event) {
-    let inputValue = event.target.textContent;
-    let isNumberInput = !Number.isNaN(Number(inputValue));
-    let lastArrElem =
-      this.#arrayForDspExpression[this.#arrayForDspExpression.length - 1];
-    let isNumberLastElem = !Number.isNaN(Number(lastArrElem));
-
-    let isDefaultDispState = this.checkExpressionDefaultState();
-
-    if ((inputValue === "0" || inputValue === "00") && lastArrElem === "0") {
-      return;
-    }
-
-    if (inputValue === "00") {
-      !isNumberLastElem ? this.addExpArrToLastElement("0", "end") : null;
-    }
-
-    if (inputValue === ".") {
-      !lastArrElem.includes(".") && isNumberLastElem
-        ? this.addExpArrToLastElement(".", "end")
-        : null;
-      lastArrElem === ")" || lastArrElem === "%"
-        ? this.addExpArrNewElement("x")
-        : null;
-      !isNumberLastElem ? this.addExpArrNewElement("0.") : null;
-    }
-
-    if (isNumberInput) {
-      lastArrElem === "%" || lastArrElem === ")"
-        ? this.addExpArrNewElement("x")
-        : null;
-
-      Number.isNaN(
-        Number(
-          this.#arrayForDspExpression[this.#arrayForDspExpression.length - 1]
-        )
-      )
-        ? this.addExpArrNewElement(inputValue)
-        : null;
-
-      isDefaultDispState ? this.updateExpArrLastElement(inputValue) : null;
-
-      isNumberLastElem && !isDefaultDispState
-        ? this.addExpArrToLastElement(inputValue, "end")
-        : null;
-    }
-
-    if (inputValue === "AC") {
-      this.#arrayForDspExpression = ["0"];
-      this.#arrayForPreviousDspExpression = ["0"];
-    }
-
-    if (inputValue === "C") {
-      this.#arrayForDspExpression = ["0"];
-    }
-
-    if (inputValue === "←") {
-      lastArrElem.length === 1 && this.#arrayForDspExpression.length === 1
-        ? this.updateExpArrLastElement("0")
-        : null;
-
-      lastArrElem.length > 1 ? this.deleteFromExpArrLastElement() : null;
-
-      lastArrElem.length === 1 && this.#arrayForDspExpression.length > 1
-        ? this.delExpArrElement()
-        : null;
-    }
-
-    if (
-      inputValue === "+" ||
-      inputValue === "-" ||
-      inputValue === "x" ||
-      inputValue === "÷"
-    ) {
-      this.updateExpArrLastElementIfEndsWithPoint();
-
-      isNumberLastElem ||
-      lastArrElem === ")" ||
-      lastArrElem === "%" ||
-      lastArrElem === "("
-        ? this.addExpArrNewElement(inputValue)
-        : null;
-
-      lastArrElem === "+" || lastArrElem === "x" || lastArrElem === "÷"
-        ? this.updateExpArrLastElement(inputValue)
-        : null;
-    }
-
-    if (inputValue === "(") {
-      this.updateExpArrLastElementIfEndsWithPoint();
-
-      (isNumberLastElem || lastArrElem === "%" || lastArrElem === ")") &&
-      !isDefaultDispState
-        ? this.addExpArrNewElement("x")
-        : null;
-
-      Number.isNaN(
-        Number(
-          this.#arrayForDspExpression[this.#arrayForDspExpression.length - 1]
-        )
-      )
-        ? this.addExpArrNewElement(inputValue)
-        : null;
-
-      isDefaultDispState ? this.updateExpArrLastElement("(") : null;
-    }
-
-    if (inputValue === ")") {
-      this.updateExpArrLastElementIfEndsWithPoint();
-      let openedBracketsMoreClosed = this.checkBracketsQauntity();
-
-      (isNumberLastElem || lastArrElem === "%" || lastArrElem === ")") &&
-      openedBracketsMoreClosed
-        ? this.addExpArrNewElement(inputValue)
-        : null;
-    }
-
-    if (inputValue === "±") {
-      this.updateExpArrLastElementIfEndsWithPoint();
-
-      if (this.#arrayForDspExpression.length === 1) {
-        this.addExpArrNewElement("-", "start");
-      } else if (
-        this.#arrayForDspExpression.length === 2 &&
-        this.#arrayForDspExpression[0] === "-"
-      ) {
-        this.delExpArrElement("start");
-      } else if (
-        (!Number.isNaN(Number(lastArrElem)) ||
-          lastArrElem === "%" ||
-          lastArrElem === ")") &&
-        (!Number.isNaN(Number(this.#arrayForDspExpression[0])) ||
-          this.#arrayForDspExpression[0] === "(")
-      ) {
-        this.addExpArrNewElement("(", "start");
-        this.addExpArrNewElement("-", "start");
-        this.addExpArrNewElement(")", "end");
-      } else if (
-        this.#arrayForDspExpression[0] === "-" &&
-        this.#arrayForDspExpression[1] === "(" &&
-        lastArrElem === ")"
-      ) {
-        this.delExpArrElement("start");
-        this.delExpArrElement("start");
-        this.delExpArrElement("end");
-      }
-    }
-
-    if (inputValue === "%") {
-      this.updateExpArrLastElementIfEndsWithPoint();
-      isNumberLastElem || lastArrElem === ")"
-        ? this.addExpArrNewElement("%")
-        : null;
-    }
-
-    this.setDisplayExpression();
-
-    if (inputValue === "=") {
-      this.updateExpArrLastElementIfEndsWithPoint();
-
-      for (let i = 0; i < this.#arrayForDspExpression.length; i++) {
-        if (
-          this.#arrayForDspExpression[i] === "÷" &&
-          (this.#arrayForDspExpression[i + 1] === "0." ||
-            this.#arrayForDspExpression[i + 1] === "-0." ||
-            Number(this.#arrayForDspExpression[i + 1]) === 0)
-        ) {
-          this.#display.textContent = "Ошибка. Попытка деления на 0.";
-          setTimeout(() => {
-            this.setDisplayExpression();
-          }, 2000);
-          return;
-        }
-      }
-
-      if (this.checkBracketsQauntity()) {
-        this.#display.textContent = "Ошибка.Проверте скобки.";
-        setTimeout(() => {
-          this.setDisplayExpression();
-        }, 2000);
-        return;
-      }
-
+  checkForZeroDivision() {
+    for (let i = 0; i < this.#mainDsplExpression.length; i++) {
       if (
-        this.#arrayForDspExpression[this.#arrayForDspExpression.length - 1] !==
-          ")" &&
-        isNaN(
-          this.#arrayForDspExpression[this.#arrayForDspExpression.length - 1]
-        )
+        this.#mainDsplExpression[i] === "÷" &&
+        Number(this.#mainDsplExpression[i + 1]) === 0
       ) {
-        this.#display.textContent = "Ошибка.Проверте последний символ.";
-        setTimeout(() => {
-          this.setDisplayExpression();
-        }, 2000);
-        return;
+        return true;
       }
-
-      let calculatedArrayFromArrayForExpression = [
-        ...this.#arrayForDspExpression,
-      ];
-
-      while (calculatedArrayFromArrayForExpression.length > 1) {
-        let innerExpr = [];
-        let innerLength;
-        let lastOpBr;
-        let calcPers = [];
-        let indx;
-        let result;
-
-        if (calculatedArrayFromArrayForExpression[0] === "-") {
-          calculatedArrayFromArrayForExpression.splice(0, 1, "x", "-1");
-        }
-
-        if (calculatedArrayFromArrayForExpression.includes(")")) {
-          let lastClBr = calculatedArrayFromArrayForExpression.indexOf(")") + 1;
-          let firstCattedArr = calculatedArrayFromArrayForExpression.slice(
-            0,
-            lastClBr
-          );
-          lastOpBr = firstCattedArr.lastIndexOf("(");
-          innerExpr = firstCattedArr.slice(lastOpBr);
-          innerLength = innerExpr.length;
-
-          calcPers = [...innerExpr];
-        } else {
-          calcPers = [...calculatedArrayFromArrayForExpression];
-        }
-
-        while (calcPers.includes("%")) {
-          indx = calcPers.indexOf("%");
-          result = Number(calcPers[indx - 1]) * 0.01;
-          result = result.toPrecision(8);
-
-          if (Number.isNaN(result)) {
-            break;
-          }
-
-          calcPers.splice(indx - 1, 2, `${result}`);
-        }
-
-        while (calcPers.includes("x")) {
-          let indx = calcPers.indexOf("x");
-
-          result = Number(calcPers[indx - 1]) * Number(calcPers[indx + 1]);
-          if (Number.isNaN(result)) {
-            break;
-          }
-          result = result.toPrecision(8);
-
-          if (calcPers.length === 3 && Number.isNaN(Number(calcPers[1]))) {
-            calcPers = [`${result}`];
-            calculatedArrayFromArrayForExpression = calcPers;
-
-            this.updatePreviousDisplayExpression(this.#arrayForDspExpression);
-            this.addToPreviousDisplayExpressionNewElement("=");
-            this.addToPreviousDisplayExpressionNewElement(
-              calculatedArrayFromArrayForExpression.join("")
-            );
-            this.setPreviousDisplayExpression();
-            this.setDisplayExpression(calculatedArrayFromArrayForExpression);
-            return;
-          }
-
-          calcPers.splice(indx - 1, 3, `${result}`);
-        }
-
-        while (calcPers.includes("÷")) {
-          indx = calcPers.indexOf("÷");
-          result = Number(calcPers[indx - 1]) / Number(calcPers[indx + 1]);
-          if (Number.isNaN(result)) {
-            break;
-          }
-          result = result.toPrecision(8);
-
-          if (calcPers.length === 3 && Number.isNaN(Number(calcPers[1]))) {
-            calcPers = [`${result}`];
-            calculatedArrayFromArrayForExpression = calcPers;
-
-            this.updatePreviousDisplayExpression(this.#arrayForDspExpression);
-            this.addToPreviousDisplayExpressionNewElement("=");
-            this.addToPreviousDisplayExpressionNewElement(
-              calculatedArrayFromArrayForExpression.join("")
-            );
-
-            this.setPreviousDisplayExpression();
-            this.setDisplayExpression(calculatedArrayFromArrayForExpression);
-            return;
-          }
-
-          calcPers.splice(indx - 1, 3, `${result}`);
-        }
-
-        while (calcPers.includes("+")) {
-          indx = calcPers.indexOf("+");
-          result = Number(calcPers[indx - 1]) + Number(calcPers[indx + 1]);
-          if (Number.isNaN(result)) {
-            break;
-          }
-          result = result.toPrecision(8);
-
-          if (calcPers.length === 3 && Number.isNaN(Number(calcPers[1]))) {
-            calcPers = [`${result}`];
-            calculatedArrayFromArrayForExpression = calcPers;
-
-            this.updatePreviousDisplayExpression(this.#arrayForDspExpression);
-            this.addToPreviousDisplayExpressionNewElement("=");
-            this.addToPreviousDisplayExpressionNewElement(
-              calculatedArrayFromArrayForExpression.join("")
-            );
-
-            this.setPreviousDisplayExpression();
-            this.setDisplayExpression(calculatedArrayFromArrayForExpression);
-            return;
-          }
-
-          calcPers.splice(indx - 1, 3, `${result}`);
-        }
-
-        while (calcPers.includes("-")) {
-          indx = calcPers.indexOf("-");
-          result;
-
-          if (calcPers.length === 2 && calcPers[0] === "-") {
-            result = Number(calcPers[indx + 1]) * -1;
-            result = result.toPrecision(8);
-            calcPers = [`${result}`];
-            calculatedArrayFromArrayForExpression = calcPers;
-
-            this.updatePreviousDisplayExpression(this.#arrayForDspExpression);
-            this.addToPreviousDisplayExpressionNewElement("=");
-            this.addToPreviousDisplayExpressionNewElement(
-              calculatedArrayFromArrayForExpression.join("")
-            );
-
-            this.setPreviousDisplayExpression();
-            this.setDisplayExpression(calculatedArrayFromArrayForExpression);
-
-            return;
-          }
-
-          result = Number(calcPers[indx - 1]) - Number(calcPers[indx + 1]);
-
-          result = result.toPrecision(8);
-
-          if (calcPers.length === 3 && Number.isNaN(Number(calcPers[1]))) {
-            calcPers = [`${result}`];
-            calculatedArrayFromArrayForExpression = calcPers;
-
-            this.updatePreviousDisplayExpression(this.#arrayForDspExpression);
-            this.addToPreviousDisplayExpressionNewElement("=");
-            this.addToPreviousDisplayExpressionNewElement(
-              calculatedArrayFromArrayForExpression.join("")
-            );
-            this.setPreviousDisplayExpression();
-            this.setDisplayExpression(calculatedArrayFromArrayForExpression);
-            return;
-          }
-
-          if (Number.isNaN(result)) {
-            break;
-          }
-
-          calcPers.splice(indx - 1, 3, `${result}`);
-        }
-
-        calculatedArrayFromArrayForExpression.splice(
-          lastOpBr,
-          innerLength,
-          calcPers[1]
-        );
-      }
-      this.addToPreviousDisplayExpressionNewElement("=");
-      this.addToPreviousDisplayExpressionNewElement(
-        calculatedArrayFromArrayForExpression.join("")
-      );
-
-      this.setPreviousDisplayExpression();
-      this.setDisplayExpression(calculatedArrayFromArrayForExpression);
     }
   }
 
-  getResult(expression) {}
+  calculatResult() {
+    let copyMainDispArrayForSubDisplay = [...this.#mainDsplExpression];
+    let resultOperationArray = [...copyMainDispArrayForSubDisplay];
+    let expressionInBrackets = [];
+    let indexLastOpenBracket;
+    let expressionInBracketsLength;
 
-  checkExpressionDefaultState() {
-    let def =
-      (this.#arrayForDspExpression.length === 1 &&
-        this.#arrayForDspExpression[0] === "0") ||
-      (this.#arrayForDspExpression.length === 2 &&
-        this.#arrayForDspExpression[0] === "-" &&
-        this.#arrayForDspExpression[1] === "0")
-        ? true
-        : false;
-    return def;
+    while (resultOperationArray.length > 1) {
+      if (resultOperationArray.includes(")")) {
+        let firstCutArray = [...resultOperationArray];
+        let indexFirstClosedBracket = firstCutArray.indexOf(")");
+
+        firstCutArray.splice(indexFirstClosedBracket, firstCutArray.length);
+
+        indexLastOpenBracket = firstCutArray.lastIndexOf("(");
+
+        let innerBracketsExtension = [...firstCutArray];
+        innerBracketsExtension.splice(0, indexLastOpenBracket + 1);
+        expressionInBracketsLength = innerBracketsExtension.length;
+
+        expressionInBrackets = [...innerBracketsExtension];
+      } else {
+        expressionInBrackets = [...resultOperationArray];
+        indexLastOpenBracket = 0;
+        expressionInBracketsLength = expressionInBrackets.length;
+      }
+
+      if (expressionInBrackets.includes("%")) {
+        while (expressionInBrackets.includes("%")) {
+          let index = expressionInBrackets.indexOf("%");
+          let result = Number(expressionInBrackets[index - 1]) / 100;
+          expressionInBrackets.splice(index - 1, 2, `${result}`);
+        }
+      }
+
+      if (expressionInBrackets.includes("x")) {
+        while (expressionInBrackets.includes("x")) {
+          let index = expressionInBrackets.indexOf("x");
+          let result =
+            Number(expressionInBrackets[index - 1]) *
+            Number(expressionInBrackets[index + 1]);
+          expressionInBrackets.splice(index - 1, 3, `${result}`);
+        }
+      }
+
+      if (expressionInBrackets.includes("÷")) {
+        while (expressionInBrackets.includes("÷")) {
+          let index = expressionInBrackets.indexOf("÷");
+          let result =
+            Number(expressionInBrackets[index - 1]) /
+            Number(expressionInBrackets[index + 1]);
+          expressionInBrackets.splice(index - 1, 3, `${result}`);
+        }
+      }
+
+      if (expressionInBrackets.includes("+")) {
+        while (expressionInBrackets.includes("+")) {
+          let index = expressionInBrackets.indexOf("+");
+          let result =
+            Number(expressionInBrackets[index - 1]) +
+            Number(expressionInBrackets[index + 1]);
+          expressionInBrackets.splice(index - 1, 3, `${result}`);
+        }
+      }
+
+      if (expressionInBrackets.includes("-")) {
+        if (expressionInBrackets[0] === "-") {
+          expressionInBrackets[1] = `${Number(expressionInBrackets[1]) * -1}`;
+          expressionInBrackets.shift();
+        }
+        while (expressionInBrackets.includes("-")) {
+          let index = expressionInBrackets.indexOf("-");
+          let result =
+            Number(expressionInBrackets[index - 1]) -
+            Number(expressionInBrackets[index + 1]);
+          expressionInBrackets.splice(index - 1, 3, `${result}`);
+        }
+      }
+
+      resultOperationArray.splice(
+        indexLastOpenBracket,
+        expressionInBracketsLength + 2,
+        ...expressionInBrackets
+      );
+    }
+
+    this.setSubDisplayExpression([
+      ...this.#mainDsplExpression,
+      "=",
+      ...resultOperationArray,
+    ]);
+    this.showOnSubDisplay();
+    this.setMainDisplayExpression(resultOperationArray);
+  }
+
+  onClick(event) {
+    const inputValue = event.target.textContent;
+    const lastArrElem = this.getMainDsplExpressionLastElement();
+    const isClearingBtn = chekInputValue("AC", "C", "←");
+    const isOperation = chekInputValue("+", "-", "x", "÷");
+    const isPercent = chekInputValue("%");
+    const isBracket = chekInputValue("(", ")");
+    const isOpposite = chekInputValue("±");
+    const isResult = chekInputValue("=");
+    const isNumPad = chekInputValue(".") || !Number.isNaN(Number(inputValue));
+    const isNumberLastElem =
+      !Number.isNaN(Number(lastArrElem)) || lastArrElem.endsWith(".");
+
+    switch (true) {
+      case isNumPad:
+        if (lastArrElem === "%" || lastArrElem === ")") {
+          this.addToMainDsplExpressionNewElement("x");
+        }
+
+        if (inputValue === ".") {
+          if (isNumberLastElem && !lastArrElem.includes(".")) {
+            this.addToMainDsplEpressionLastElementSymbol(inputValue);
+            break;
+          }
+
+          if (!isNumberLastElem) {
+            this.addToMainDsplExpressionNewElement("0.");
+            break;
+          }
+        }
+
+        if (inputValue === "00" || inputValue === "0") {
+          if (lastArrElem === "-0" || lastArrElem === "0") {
+            break;
+          }
+        }
+
+        if (Number.isInteger(Number(inputValue))) {
+          if (lastArrElem === "-0" || lastArrElem === "0") {
+            this.replaceMainDsplExpressionLastElement(inputValue);
+            break;
+          }
+
+          if (isNumberLastElem) {
+            this.addToMainDsplEpressionLastElementSymbol(inputValue);
+            break;
+          }
+
+          if (!isNumberLastElem) {
+            this.addToMainDsplExpressionNewElement(`${Number(inputValue)}`);
+            break;
+          }
+        }
+
+        break;
+
+      case isClearingBtn:
+        if (inputValue === "AC") {
+          this.resetMainDsplExpression();
+          this.resetSubDsplExpression();
+          this.showOnSubDisplay();
+          break;
+        }
+
+        if (inputValue === "C") {
+          this.resetMainDsplExpression();
+          break;
+        }
+
+        if (inputValue === "←") {
+          if (
+            lastArrElem.length === 1 &&
+            this.#mainDsplExpression.length === 1
+          ) {
+            this.resetMainDsplExpression();
+            break;
+          }
+
+          if (lastArrElem.length > 1) {
+            this.deleteFromMainExpressionLastElementSymbol();
+            break;
+          }
+
+          if (lastArrElem.length === 1) {
+            this.deleteFromMainExpressionElement();
+            break;
+          }
+
+          break;
+        }
+
+        break;
+
+      case isOperation:
+        if (
+          (lastArrElem === "+" ||
+            lastArrElem === "x" ||
+            lastArrElem === "÷" ||
+            lastArrElem === "-") &&
+          this.#mainDsplExpression[this.#mainDsplExpression.length - 2] !== "("
+        ) {
+          this.replaceMainDsplExpressionLastElement(inputValue);
+          break;
+        }
+
+        this.fixLastMainDsplExpressionElementEndsWithPoin();
+
+        if (lastArrElem === ")" || lastArrElem === "%") {
+          this.addToMainDsplExpressionNewElement(inputValue);
+          break;
+        }
+
+        if (isNumberLastElem || (lastArrElem === "(" && inputValue === "-")) {
+          this.addToMainDsplExpressionNewElement(inputValue);
+          break;
+        }
+
+        if (!isNumberLastElem) {
+          break;
+        }
+
+        break;
+
+      case isPercent:
+        if (!isNumberLastElem && lastArrElem !== ")") {
+          break;
+        }
+        this.fixLastMainDsplExpressionElementEndsWithPoin();
+        this.addToMainDsplExpressionNewElement(inputValue);
+        break;
+
+      case isBracket:
+        if (isNumberLastElem) {
+          this.fixLastMainDsplExpressionElementEndsWithPoin();
+        }
+
+        if (inputValue === "(") {
+          if (isNumberLastElem || lastArrElem === "%" || lastArrElem === ")") {
+            this.addToMainDsplExpressionNewElement("x");
+            this.addToMainDsplExpressionNewElement(inputValue);
+            break;
+          }
+          this.addToMainDsplExpressionNewElement(inputValue);
+          break;
+        }
+
+        if (inputValue === ")") {
+          if (!this.calcAdvantageOpenBrackets()) {
+            break;
+          }
+
+          if (isNumberLastElem || lastArrElem === "%" || lastArrElem === ")") {
+            this.addToMainDsplExpressionNewElement(inputValue);
+          }
+          break;
+        }
+
+        break;
+
+      case isOpposite:
+        if (this.#mainDsplExpression.length === 1) {
+          if (lastArrElem.includes("-")) {
+            this.deleteFromMainExpressionLastElementSymbol("start");
+            break;
+          } else {
+            this.addToMainDsplEpressionLastElementSymbol("-", "start");
+            break;
+          }
+        }
+
+        if (this.#mainDsplExpression.length === 2 && lastArrElem === "%") {
+          if (this.#mainDsplExpression[0].includes("-")) {
+            this.deleteFromMainExpressionLastElementSymbol("start");
+            break;
+          } else {
+            this.addToMainDsplExpressionNewElement("-", "start");
+            break;
+          }
+        }
+        if (this.#mainDsplExpression.length === 3) {
+          this.fixLastMainDsplExpressionElementEndsWithPoin();
+
+          if (this.#mainDsplExpression[0] === "-") {
+            this.deleteFromMainExpressionElement("start");
+            break;
+          }
+        }
+
+        if (this.#mainDsplExpression.length >= 3) {
+          this.fixLastMainDsplExpressionElementEndsWithPoin();
+
+          if (
+            this.#mainDsplExpression[0] === "-" &&
+            this.#mainDsplExpression[1] === "(" &&
+            lastArrElem === ")"
+          ) {
+            this.deleteFromMainExpressionElement("start");
+            this.deleteFromMainExpressionElement("start");
+            this.deleteFromMainExpressionElement("end");
+          } else if (isNumberLastElem) {
+            this.addToMainDsplExpressionNewElement("(", "start");
+            this.addToMainDsplExpressionNewElement("-", "start");
+            this.addToMainDsplExpressionNewElement(")", "end");
+          }
+        }
+
+        break;
+
+      case isResult:
+        this.fixLastMainDsplExpressionElementEndsWithPoin();
+
+        if (this.calcAdvantageOpenBrackets()) {
+          this.#mainDisplay.textContent = "Ошибка.Проверте скобки.";
+          setTimeout(() => {
+            this.showOnMainDisplay();
+          }, 2000);
+          return;
+        }
+
+        if (this.checkForZeroDivision()) {
+          this.#mainDisplay.textContent = "Ошибка. Попытка деления на 0.";
+          setTimeout(() => {
+            this.showOnMainDisplay();
+          }, 2000);
+          return;
+        }
+
+        if (!isNumberLastElem && lastArrElem !== ")" && lastArrElem !== "%") {
+          this.#mainDisplay.textContent = "Ошибка.Проверте последний символ.";
+          setTimeout(() => {
+            this.showOnMainDisplay();
+          }, 2000);
+          return;
+        }
+
+        this.calculatResult();
+        break;
+    }
+
+    this.showOnMainDisplay();
   }
 }
